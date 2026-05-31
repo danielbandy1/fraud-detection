@@ -84,9 +84,9 @@ def main():
     df = build_features(df)
 
     if args.sample_frac < 1.0:
-        df = df.groupby(TARGET_COL, group_keys=False).apply(
-            lambda g: g.sample(frac=args.sample_frac, random_state=42)
-        ).reset_index(drop=True)
+        fraud = df[df[TARGET_COL] == 1].sample(frac=args.sample_frac, random_state=42)
+        legit = df[df[TARGET_COL] == 0].sample(frac=args.sample_frac, random_state=42)
+        df = pd.concat([fraud, legit]).sample(frac=1.0, random_state=42).reset_index(drop=True)
         print(f"  Sampled to {len(df):,} rows ({args.sample_frac:.0%})")
 
     X = df[FEATURE_COLS]
