@@ -1,0 +1,14 @@
+{
+  "auprc": 0.9947660112055274,
+  "params": {
+    "learning_rate": 0.03109400297566844,
+    "num_leaves": 211,
+    "min_child_samples": 32,
+    "feature_fraction": 0.9720342940906754,
+    "bagging_fraction": 0.9489393221630473,
+    "bagging_freq": 5,
+    "reg_alpha": 4.89623628896201,
+    "reg_lambda": 0.0002185853303733239,
+    "min_split_gain": 0.018417315234738135
+  }
+}

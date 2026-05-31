@@ -3,9 +3,12 @@
 Optuna hyperparameter tuning for the fraud detection LightGBM model.
 Designed to run on MCC SLURM — each trial is independent, results stored in SQLite.
 """
+import os
 import sys
 import json
 import argparse
+import time
+import random
 import numpy as np
 import pandas as pd
 import optuna
@@ -93,6 +96,8 @@ def main():
     y = df[TARGET_COL]
     print(f"  Fraud rate: {y.mean():.4%}  |  n={len(y):,}")
 
+    # Stagger startup to avoid SQLite alembic_version race on shared DB
+    time.sleep(random.uniform(0, int(os.environ.get("SLURM_ARRAY_TASK_ID", "0")) * 3))
     study = optuna.create_study(
         direction="maximize",
         study_name=args.study_name,
