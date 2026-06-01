@@ -47,6 +47,14 @@ After filtering to the transaction types where fraud actually occurs (`CASH_OUT`
 
 ---
 
+## Key Figures
+
+| Figure | What it shows |
+|---|---|
+| `reports/figures/pr_curve.png` | Precision-recall performance against the rare-fraud baseline |
+| `reports/figures/shap_summary.png` | Global SHAP feature importance for the LightGBM model |
+| `reports/figures/cost_threshold_curve.png` | Expected business cost across decision thresholds |
+
 ## Dashboard
 
 Five tabs covering the full modelling workflow:
