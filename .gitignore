@@ -5,3 +5,8 @@ __pycache__/
 .DS_Store
 *.egg-info/
 .ipynb_checkpoints/
+models/*.pkl
+models/*.txt
+models/*.parquet
+models/*.h5
+models/*.bin
