@@ -1,11 +1,15 @@
 # Financial Fraud Detection
 
 [![Tests](https://img.shields.io/badge/tests-16%20passed-brightgreen)](#testing)
+[![AUPRC](https://img.shields.io/badge/AUPRC-0.880-blue)](#quick-results)
+[![Recall](https://img.shields.io/badge/fraud%20recall-97.6%25-green)](#quick-results)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://python.org)
 [![Streamlit](https://img.shields.io/badge/dashboard-Streamlit-ff4b4b)](https://streamlit.io)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)](#license)
 
-End-to-end fraud detection pipeline on the PaySim synthetic mobile money dataset — covering graph-based feature engineering, LightGBM with class-imbalance handling, business cost threshold calibration, and SHAP explainability. Wrapped in an interactive Streamlit dashboard.
+End-to-end fraud detection pipeline on PaySim mobile money transactions: graph-based feature engineering, LightGBM class-imbalance handling, stratified 5-fold validation, business cost threshold calibration, SHAP explainability, and a Streamlit dashboard.
+
+**Result callout:** LightGBM reaches **AUPRC 0.880** and **AUROC 0.989** on out-of-fold predictions, catching **97.6% of fraud** at the cost-optimized review threshold.
 
 **Dataset:** [PaySim — Synthetic Financial Fraud](https://www.kaggle.com/datasets/ealaxi/paysim1) — 6.36M transactions, 30 simulated days, binary fraud label.
 
