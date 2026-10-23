@@ -1,148 +1,31 @@
-# Financial Fraud Detection
+# PaySim fraud detection — historical result audit and repaired histories
 
-[![Tests](https://img.shields.io/badge/tests-16%20passed-brightgreen)](#testing)
-[![AUPRC](https://img.shields.io/badge/AUPRC-0.880-blue)](#quick-results)
-[![Recall](https://img.shields.io/badge/fraud%20recall-97.6%25-green)](#quick-results)
-[![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://python.org)
-[![Streamlit](https://img.shields.io/badge/dashboard-Streamlit-ff4b4b)](https://streamlit.io)
-[![License](https://img.shields.io/badge/license-MIT-lightgrey)](#license)
+AUTHORED BY ORION — local repairs for Daniel's review, 23 October 2026.
 
-End-to-end fraud detection pipeline on PaySim mobile money transactions: graph-based feature engineering, LightGBM class-imbalance handling, stratified 5-fold validation, business cost threshold calibration, SHAP explainability, and a Streamlit dashboard.
-
-**Result callout:** LightGBM reaches **AUPRC 0.880** and **AUROC 0.989** on out-of-fold predictions, catching **97.6% of fraud** at the cost-optimized review threshold.
-
-**Dataset:** [PaySim — Synthetic Financial Fraud](https://www.kaggle.com/datasets/ealaxi/paysim1) — 6.36M transactions, 30 simulated days, binary fraud label.
-
----
-
-## Quick Results
-
-After filtering to the transaction types where fraud actually occurs (`CASH_OUT` and `TRANSFER`), the model achieves AUPRC 0.880 and AUROC 0.989 on out-of-fold predictions — catching 97.6% of fraud at a cost-optimised threshold. The logistic regression baseline reaches AUPRC 0.788, confirming the graph features and non-linear model add meaningful lift.
-
----
-
-## Key Results
-
-| Metric | Value |
-|---|---|
-| Raw transactions | 6,362,620 |
-| Filtered (CASH_OUT + TRANSFER) | 2,770,409 |
-| Fraud rate | 0.30% |
-| AUPRC (OOF, LightGBM) | 0.8800 |
-| AUROC (OOF, LightGBM) | 0.9894 |
-| F1 at optimal threshold | 0.7653 |
-| Recall (fraud caught) | 97.6% |
-| AUPRC baseline (logistic) | 0.7880 |
-
-**Verdict: Ship with review queue.** The model catches 97.6% of fraud, and the interactive threshold tuner lets a risk team dial precision vs. recall against their actual cost structure rather than a fixed 0.5 cutoff.
-
----
-
-## Methods
-
-| Component | What it does |
-|---|---|
-| Balance features | Detect accounts drained to zero, pass-through destinations, amount-to-balance ratio |
-| Graph features | Sender fan-out, velocity (step gap), destination re-use — mule network indicators |
-| LightGBM | Gradient boosting with `scale_pos_weight` for class imbalance; 5-fold stratified CV |
-| Logistic baseline | Scaled logistic regression for AUPRC comparison |
-| Cost-optimal threshold | Minimise `cost_fn × FN + cost_fp × FP`; adjustable via dashboard sliders |
-| SHAP | TreeExplainer on stratified 2K sample; beeswarm + per-transaction waterfall |
-
----
-
-## Key Figures
-
-| Figure | What it shows |
-|---|---|
-| `reports/figures/pr_curve.png` | Precision-recall performance against the rare-fraud baseline |
-| `reports/figures/shap_summary.png` | Global SHAP feature importance for the LightGBM model |
-| `reports/figures/cost_threshold_curve.png` | Expected business cost across decision thresholds |
-
-## Dashboard
-
-Five tabs covering the full modelling workflow:
-
-**Tabs:** Overview · Model Performance · Threshold Tuning · SHAP Explainability · Data
-
-### Running locally
+**Question:** can transaction features identify rare simulated fraud without looking into the future? **Readiness: historical performance needs re-evaluation; not deployment-ready.**
 
 ```bash
-git clone https://github.com/danielbandy1/fraud-detection
-cd fraud-detection
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-python train.py           # ~3 min, saves model to models/
-./run_dashboard.sh        # opens at http://localhost:8503
+bash reproduce.sh
 ```
 
----
+The default run creates a clean Python 3.13 environment, installs exact pins, checks historical metric arithmetic, exercises strict prior-step histories and runs the unit suite. It uses explicitly labelled synthetic edge fixtures; **it does not train or evaluate on PaySim** and does not reproduce AUPRC/AUROC from predictions. No credentials, external service, publication or private data are used.
 
-## Project Structure
+## Public data source / licence
 
-```
-fraud-detection/
-├── app.py                  # Streamlit dashboard
-├── run_dashboard.sh        # Launch script
-├── train.py                # Training script — CV + final model + baseline
-├── requirements.txt
-├── src/
-│   ├── features.py         # Feature engineering (balance, time, graph)
-│   ├── models.py           # LightGBM, logistic, evaluation, threshold optimisation
-│   └── explain.py          # SHAP utilities
-├── models/                 # Saved artifacts (gitignored)
-│   ├── lgbm_fraud.txt
-│   ├── logreg.pkl
-│   ├── oof_probs.parquet
-│   └── results.json
-└── tests/
-    ├── test_features.py    # 8 unit tests
-    └── test_models.py      # 8 unit tests
-```
+PaySim is a **synthetic financial simulation**, not real bank-client transactions: https://www.kaggle.com/datasets/ealaxi/paysim1 . The public Kaggle dataset-list API entry `ealaxi/paysim1` reports **CC BY-SA 4.0**; code and data permissions are separate. No raw PaySim rows are redistributed by this branch. A full rerun needs the exact public source file under `data/raw/`, its independently recorded hash, explicit inclusion rules and a prespecified temporal evaluation. Original code's filtering retains CASH_OUT/TRANSFER, so results do not cover other transaction types. The old source's 6,362,620 total rows were not independently recounted here.
 
----
+## What the saved artifact supports
 
-## Method Notes
+`models/results.json` records **AUPRC 0.879995 / AUROC 0.989434**, 2,770,409 filtered rows, 8,213 fraud labels, and TP/FP/FN/TN counts. Those entries trace the résumé's rounded **0.880 / 0.989**, but the predictions/raw fingerprint are absent, so independent score reproduction is unavailable. Confusion counts reconcile to rows and fraud counts; `portfolio_results/audit.json` records that limited check and the artifact hash. The existing figure files are historical, not newly validated figures.
 
-### Why AUPRC over AUROC
+## Defects found and repaired
 
-At 0.30% fraud rate, AUROC is inflated by the overwhelming negative class — a model that flags nothing still scores 0.997. AUPRC focuses on the precision-recall trade-off in the region that matters: the top of the score distribution where alerts are actually reviewed.
+- Full-window account counts/unique destinations previously used future transactions before random CV. Histories now use **strictly earlier steps**; tied-hour records cannot see one another. Original row/index order is preserved so returned predictions stay aligned. Regression tests append future records and verify past features cannot change.
+- Original README confused all-negative **accuracy** with AUROC. All-negative predictions can have high accuracy with rare fraud; a constant score has AUROC 0.5 when both classes exist. That claim is removed.
+- Historical random-fold metrics and threshold tuning on evaluated labels are exploratory. `train.py` now requires an explicit exploratory-CV acknowledgement, and the repaired history definition invalidates reuse of previous model parameters/results as though unchanged.
 
-### Graph Features
+## What is still needed
 
-Real fraud rings operate through money mule networks. A compromised account drains its balance and fans out to multiple mule accounts in rapid succession. The graph features capture this:
+A later, prespecified forward-time train/validation/test run must use training-window-only state, tune thresholds on validation data and report held-out average precision, recall, review burden and cost. Balance-after-transfer features are available only after the transfer completes: this cannot honestly claim pre-transaction prevention. Single-record scoring has no account history unless supplied through a stateful history process; the batch helper is a retrospective educational interface, not a deployed online feature store. SHAP code/UI exist, but neither proves model validity. New deployment-performance numbers remain **unsupported**, not silently replaced with smoke-test results.
 
-- **`orig_unique_dest`** — unique destinations per sender (fan-out indicator)
-- **`orig_step_gap`** — time since previous transaction (velocity burst)
-- **`dest_recv_count`** — how many senders have sent to this destination (mule re-use)
-- **`orig_drained`** — sender account emptied to zero in one shot
-
-These are computed from the transaction log itself with no external graph infrastructure required.
-
-### Threshold Calibration
-
-Standard classifiers output a score, not a decision. The optimal decision boundary depends on the cost structure of the specific business:
-
-$$t^* = \arg\min_t \; c_{FN} \cdot FN(t) + c_{FP} \cdot FP(t)$$
-
-The dashboard exposes this directly — drag the cost sliders and the optimal threshold, confusion matrix, and catch rate all update live.
-
-### Class Imbalance
-
-Handled via `scale_pos_weight = n_negative / n_positive ≈ 337` in LightGBM. No synthetic oversampling (SMOTE) — oversampling can leak temporal structure in time-ordered transaction data.
-
----
-
-## Testing
-
-```bash
-source .venv/bin/activate
-pytest tests/ -v
-# 16 passed
-```
-
----
-
-## License
-
-MIT
+Old README preserved in `docs/README_UPSTREAM_20261023.md`. Python/ML/API/Streamlit code is inspectable, but no claim of a live production service or Daniel's independent authorship of these repairs is made.

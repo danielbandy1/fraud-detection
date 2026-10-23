@@ -19,6 +19,14 @@ MODELS_DIR.mkdir(exist_ok=True)
 
 
 def main():
+    import argparse
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--acknowledge-exploratory-cv', action='store_true')
+    args = parser.parse_args()
+    if not args.acknowledge_exploratory_cv:
+        parser.error('Legacy random-fold experiment only; not temporal deployment validation. '
+                     'Read README; explicitly acknowledge before running. Historical metrics '
+                     'are invalidated by repaired history features and must not be reused.')
     print("Loading data...")
     raw = load_raw()
     print(f"  Raw rows: {len(raw):,}")

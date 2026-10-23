@@ -42,29 +42,41 @@ def add_time_features(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def add_graph_features(df: pd.DataFrame) -> pd.DataFrame:
+    """History from strictly EARLIER steps. Same-hour ordering is unknown.
+
+    AUTHORED BY ORION: replaces full-window counts that leaked future records.
+    Returns original row order/index so inference probabilities remain aligned.
+    A batch must contain history; isolated records have zero observed history.
     """
-    Velocity and degree features per originator account within the transaction window.
-    Real fraud rings show high out-degree and rapid consecutive transactions.
-    """
-    df = df.copy().sort_values(["nameorig", "step"])
-
-    # Transaction count per sender (out-degree proxy)
-    orig_counts = df.groupby("nameorig")["step"].transform("count")
-    df["orig_tx_count"] = orig_counts
-
-    # Unique destinations per sender (fan-out — rings send to many mules)
-    orig_unique_dest = df.groupby("nameorig")["namedest"].transform("nunique")
-    df["orig_unique_dest"] = orig_unique_dest
-
-    # Time since last transaction by same sender (low gap = velocity burst)
-    df["orig_prev_step"] = df.groupby("nameorig")["step"].shift(1)
-    df["orig_step_gap"] = (df["step"] - df["orig_prev_step"]).fillna(999).clip(upper=999)
-
-    # How many times has this destination been seen (mule re-use)
-    dest_recv_count = df.groupby("namedest")["step"].transform("count")
-    df["dest_recv_count"] = dest_recv_count
-
-    df = df.drop(columns=["orig_prev_step"])
+    from collections import defaultdict
+    df = df.copy()
+    n = len(df)
+    out = {c: np.zeros(n, dtype=float) for c in
+           ['orig_tx_count','orig_unique_dest','orig_step_gap','dest_recv_count']}
+    out['orig_step_gap'][:] = 999
+    sent, received = defaultdict(int), defaultdict(int)
+    destinations, last = defaultdict(set), {}
+    steps = pd.to_numeric(df['step'], errors='raise').to_numpy()
+    origins, dests = df['nameorig'].to_numpy(), df['namedest'].to_numpy()
+    order = np.argsort(steps, kind='stable')
+    start = 0
+    while start < n:
+        end = start + 1
+        while end < n and steps[order[end]] == steps[order[start]]: end += 1
+        positions = order[start:end]
+        for pos in positions:
+            origin, dest = origins[pos], dests[pos]
+            out['orig_tx_count'][pos] = sent[origin]
+            out['orig_unique_dest'][pos] = len(destinations[origin])
+            out['dest_recv_count'][pos] = received[dest]
+            if origin in last:
+                out['orig_step_gap'][pos] = min(float(steps[pos]) - last[origin],999)
+        for pos in positions:
+            origin, dest = origins[pos], dests[pos]
+            sent[origin] += 1; destinations[origin].add(dest); received[dest] += 1
+            last[origin] = float(steps[pos])
+        start = end
+    for col, values in out.items(): df[col] = values
     return df
 
 

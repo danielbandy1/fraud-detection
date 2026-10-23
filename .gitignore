@@ -10,3 +10,9 @@ models/*.txt
 models/*.parquet
 models/*.h5
 models/*.bin
+
+# ORION local reproduction outputs
+.venv/
+portfolio_results/*.joblib
+models/readmission_group_holdout.joblib
+.pytest_cache/

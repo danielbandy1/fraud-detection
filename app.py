@@ -52,7 +52,7 @@ def load_oof():
 models_ready = (MODELS_DIR / "lgbm_fraud.txt").exists() and (MODELS_DIR / "results.json").exists()
 
 if not models_ready:
-    st.warning("Model not trained yet. Run `python train.py` first.")
+    st.warning("Historical weights/OOF predictions are unavailable. Run `bash reproduce.sh` for the artifact audit and feature checks. A new forward-time evaluation is required before claiming current performance.")
     st.stop()
 
 model, logreg, scaler = load_model()
