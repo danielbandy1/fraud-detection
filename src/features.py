@@ -42,41 +42,36 @@ def add_time_features(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def add_graph_features(df: pd.DataFrame) -> pd.DataFrame:
-    """History from strictly EARLIER steps. Same-hour ordering is unknown.
+    """Vectorized strict-prior-step histories, preserving input order/index.
 
-    AUTHORED BY ORION: replaces full-window counts that leaked future records.
-    Returns original row order/index so inference probabilities remain aligned.
-    A batch must contain history; isolated records have zero observed history.
+    AUTHORED BY ORION. Same semantics as the prior repaired implementation:
+    no future rows, no within-step ordering, no target labels. Vectorization
+    avoids millions of per-account Python sets on the full PaySim source.
     """
-    from collections import defaultdict
     df = df.copy()
     n = len(df)
-    out = {c: np.zeros(n, dtype=float) for c in
-           ['orig_tx_count','orig_unique_dest','orig_step_gap','dest_recv_count']}
-    out['orig_step_gap'][:] = 999
-    sent, received = defaultdict(int), defaultdict(int)
-    destinations, last = defaultdict(set), {}
-    steps = pd.to_numeric(df['step'], errors='raise').to_numpy()
-    origins, dests = df['nameorig'].to_numpy(), df['namedest'].to_numpy()
-    order = np.argsort(steps, kind='stable')
-    start = 0
-    while start < n:
-        end = start + 1
-        while end < n and steps[order[end]] == steps[order[start]]: end += 1
-        positions = order[start:end]
-        for pos in positions:
-            origin, dest = origins[pos], dests[pos]
-            out['orig_tx_count'][pos] = sent[origin]
-            out['orig_unique_dest'][pos] = len(destinations[origin])
-            out['dest_recv_count'][pos] = received[dest]
-            if origin in last:
-                out['orig_step_gap'][pos] = min(float(steps[pos]) - last[origin],999)
-        for pos in positions:
-            origin, dest = origins[pos], dests[pos]
-            sent[origin] += 1; destinations[origin].add(dest); received[dest] += 1
-            last[origin] = float(steps[pos])
-        start = end
-    for col, values in out.items(): df[col] = values
+    columns = ['orig_tx_count','orig_unique_dest','orig_step_gap','dest_recv_count']
+    if not n:
+        for col in columns: df[col] = np.array([], dtype=float)
+        return df
+    order = np.argsort(pd.to_numeric(df['step'],errors='raise').to_numpy(),kind='stable')
+    work = df.iloc[order][['nameorig','namedest','step']].reset_index(drop=True)
+    origin, dest, step = work['nameorig'], work['namedest'], work['step']
+    def restore(col, values):
+        array = np.empty(n,dtype=float)
+        array[order] = np.asarray(values)
+        df[col] = array
+    counts = work.groupby('nameorig',sort=False).cumcount()
+    restore('orig_tx_count',counts.groupby([origin,step],sort=False).transform('min'))
+    first_pair = ~work.duplicated(['nameorig','namedest'])
+    cumulative = first_pair.groupby(origin,sort=False).cumsum()
+    prior_unique = (cumulative.groupby([origin,step],sort=False).transform('max')
+                    -first_pair.groupby([origin,step],sort=False).transform('sum'))
+    restore('orig_unique_dest',prior_unique)
+    gap = (step-step.groupby(origin,sort=False).shift(1)).fillna(999).clip(upper=999)
+    restore('orig_step_gap',gap.groupby([origin,step],sort=False).transform('max'))
+    counts = work.groupby('namedest',sort=False).cumcount()
+    restore('dest_recv_count',counts.groupby([dest,step],sort=False).transform('min'))
     return df
 
 

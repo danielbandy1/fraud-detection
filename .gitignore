@@ -16,3 +16,6 @@ models/*.bin
 portfolio_results/*.joblib
 models/readmission_group_holdout.joblib
 .pytest_cache/
+# Full-source evaluation: raw data and large reproducible model/prediction caches stay local.
+forward_time_results/model.txt
+forward_time_results/test_predictions.parquet

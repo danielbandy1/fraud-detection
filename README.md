@@ -2,7 +2,9 @@
 
 AUTHORED BY ORION — local repairs for Daniel's review, 23 October 2026.
 
-**Question:** can transaction features identify rare simulated fraud without looking into the future? **Readiness: historical performance needs re-evaluation; not deployment-ready.**
+**Question:** can transaction features identify rare simulated fraud without looking into the future? **Update: a new full-source forward-time evaluation is now available; still not deployment-ready.**
+
+See [the forward-time report](FORWARD_TIME_EVAL_ORION_20261023.md) and adjacent JSON: later-step AP 0.889492 / AUROC 0.994632, test fraud rate 3.673938%, threshold0.5, precision85.8306% / recall98.8125%. The new design uses all source data, train<=500, validation501–600, test>600, and strictly earlier-hour histories. It does not retrospectively validate the historical metrics below. Its exact reproduction command is in that report; the default `reproduce.sh` remains the lightweight historical-artifact/unit-test check.
 
 ```bash
 bash reproduce.sh
