@@ -4,7 +4,11 @@ AUTHORED BY ORION — local repairs for Daniel's review, 23 October 2026.
 
 **Question:** can transaction features identify rare simulated fraud without looking into the future? **Update: a new full-source forward-time evaluation is now available; still not deployment-ready.**
 
-See [the forward-time report](FORWARD_TIME_EVAL_ORION_20261023.md) and adjacent JSON: later-step AP 0.889492 / AUROC 0.994632, test fraud rate 3.673938%, threshold0.5, precision85.8306% / recall98.8125%. The new design uses all source data, train<=500, validation501–600, test>600, and strictly earlier-hour histories. It does not retrospectively validate the historical metrics below. Its exact reproduction command is in that report; the default `reproduce.sh` remains the lightweight historical-artifact/unit-test check.
+See [the full forward-time evaluation report](FULL_EVAL_ORION_20261024.md) and [earlier memo](FORWARD_TIME_EVAL_ORION_20261023.md): later-step test AP **0.889492** (95% bootstrap CI: [0.8188, 0.9465]) and AUROC **0.994632** (95% CI: [0.9916, 0.9972]) on 43,550 held-out transactions (3.67% fraud rate).
+- At validation-tuned F1 threshold (0.9975): Precision = **88.57%**, Recall = **98.81%**, F1 = **0.9341** (TP: 1581, FP: 204, FN: 19).
+- At default threshold (0.50): Precision = **85.83%**, Recall = **98.81%** (TP: 1581, FP: 261, FN: 19).
+- Holdout curves plotted in `portfolio_results/forward_eval_curves.png`.
+The new design uses all source data, train<=500, validation 501–600, test>600, and strictly earlier-hour histories. It does not retrospectively validate the historical metrics below. Its exact reproduction command is in that report; the default `reproduce.sh` remains the lightweight historical-artifact/unit-test check.
 
 ```bash
 bash reproduce.sh

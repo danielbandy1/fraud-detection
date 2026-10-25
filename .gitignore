@@ -19,3 +19,4 @@ models/readmission_group_holdout.joblib
 # Full-source evaluation: raw data and large reproducible model/prediction caches stay local.
 forward_time_results/model.txt
 forward_time_results/test_predictions.parquet
+full_eval_results/

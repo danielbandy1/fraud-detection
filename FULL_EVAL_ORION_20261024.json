@@ -1,0 +1,221 @@
+{
+  "authored_by": "ORION",
+  "created_at": "2026-10-24T23:22:03-0400",
+  "source": "ealaxi/paysim1",
+  "license": "CC BY-SA 4.0 (as source task specifies)",
+  "source_zip_sha256": "f7eef9ffad5cfa64a034143a5c9b30491d189420b273d5ad5723ca40b596613d",
+  "raw_rows": 6362620,
+  "raw_fraud": 8213,
+  "eligible_rows": 2770409,
+  "duplicates_removed": 0,
+  "split": {
+    "train": {
+      "rows": 2645779,
+      "fraud": 5561,
+      "base_rate": 0.0021018384377531154,
+      "min_step": 1,
+      "max_step": 500
+    },
+    "validation": {
+      "rows": 81080,
+      "fraud": 1052,
+      "base_rate": 0.012974839664528861,
+      "min_step": 501,
+      "max_step": 600
+    },
+    "test": {
+      "rows": 43550,
+      "fraud": 1600,
+      "base_rate": 0.03673938002296211,
+      "min_step": 601,
+      "max_step": 743
+    }
+  },
+  "features": [
+    "amount",
+    "log_amount",
+    "oldbalanceorg",
+    "newbalanceorig",
+    "oldbalancedest",
+    "newbalancedest",
+    "orig_balance_delta",
+    "dest_balance_delta",
+    "orig_drained",
+    "dest_no_change",
+    "amount_to_orig_balance",
+    "hour",
+    "day",
+    "is_night",
+    "orig_tx_count",
+    "orig_unique_dest",
+    "orig_step_gap",
+    "dest_recv_count",
+    "is_transfer"
+  ],
+  "features_sha256": "56c7ea0a11d54c33cf0eff34a3acf0c2e6c2b6f9547fbb84d23f019f99617863",
+  "script_sha256": "c1ea11a5487f0b29e50d53e00e040c782696254a4aa635fa9587c3fa8e1138e8",
+  "plan_sha256": "9ce569973418d2f1106d052edaecd2a296563f39ec9d0ea7db7e2ad93a35e100",
+  "params": {
+    "objective": "binary",
+    "metric": "average_precision",
+    "learning_rate": 0.05,
+    "num_leaves": 31,
+    "min_child_samples": 50,
+    "feature_fraction": 0.8,
+    "bagging_fraction": 0.8,
+    "bagging_freq": 5,
+    "verbosity": -1,
+    "seed": 42,
+    "num_threads": 2,
+    "deterministic": true,
+    "force_col_wise": true,
+    "scale_pos_weight": 474.7739615177126
+  },
+  "best_iteration": 18,
+  "threshold_selection": {
+    "criterion": "maximize validation F1; ties choose higher threshold",
+    "threshold": 0.9974552615977691,
+    "validation_f1": 0.8550308008213552,
+    "test_used_for_selection": false
+  },
+  "validation": {
+    "average_precision": 0.7354916178112275,
+    "auroc": 0.9903825308005316,
+    "threshold": 0.9974552615977691,
+    "tn": 79686,
+    "fp": 342,
+    "fn": 11,
+    "tp": 1041,
+    "confusion_matrix_true_rows_0_1_pred_columns_0_1": [
+      [
+        79686,
+        342
+      ],
+      [
+        11,
+        1041
+      ]
+    ],
+    "precision": 0.7527114967462039,
+    "recall": 0.9895437262357415,
+    "f1": 0.8550308008213552,
+    "rows": 81080,
+    "fraud": 1052,
+    "base_rate": 0.012974839664528861
+  },
+  "test": {
+    "average_precision": 0.8894915912736372,
+    "auroc": 0.9946323897497021,
+    "threshold": 0.9974552615977691,
+    "tn": 41746,
+    "fp": 204,
+    "fn": 19,
+    "tp": 1581,
+    "confusion_matrix_true_rows_0_1_pred_columns_0_1": [
+      [
+        41746,
+        204
+      ],
+      [
+        19,
+        1581
+      ]
+    ],
+    "precision": 0.8857142857142857,
+    "recall": 0.988125,
+    "f1": 0.9341211225997046,
+    "rows": 43550,
+    "fraud": 1600,
+    "base_rate": 0.03673938002296211
+  },
+  "test_fixed_0_5": {
+    "average_precision": 0.8894915912736372,
+    "auroc": 0.9946323897497021,
+    "threshold": 0.5,
+    "tn": 41689,
+    "fp": 261,
+    "fn": 19,
+    "tp": 1581,
+    "confusion_matrix_true_rows_0_1_pred_columns_0_1": [
+      [
+        41689,
+        261
+      ],
+      [
+        19,
+        1581
+      ]
+    ],
+    "precision": 0.8583061889250815,
+    "recall": 0.988125,
+    "f1": 0.9186519465427078,
+    "rows": 43550,
+    "fraud": 1600,
+    "base_rate": 0.03673938002296211
+  },
+  "primary_bootstrap": {
+    "method": "circular moving-block bootstrap of complete hourly steps",
+    "block_steps": 24,
+    "timeline_steps": 143,
+    "replicates": 2000,
+    "valid": 2000,
+    "invalid_one_class": 0,
+    "seed": 20261024,
+    "ap_95ci": [
+      0.8188017525345216,
+      0.9465361936961818
+    ],
+    "auroc_95ci": [
+      0.9915587130084422,
+      0.9971600905238991
+    ]
+  },
+  "secondary_bootstrap": {
+    "method": "class-stratified iid row bootstrap, ignores temporal/account dependence",
+    "replicates": 2000,
+    "seed": 20261025,
+    "ap_95ci": [
+      0.8736044397615413,
+      0.9047567488864867
+    ],
+    "auroc_95ci": [
+      0.9916060652562575,
+      0.9970047413215136
+    ]
+  },
+  "legacy_random_cv": {
+    "auprc": 0.8799952497264767,
+    "auroc": 0.9894339418050102,
+    "f1": 0.7652788388082505,
+    "precision": 0.6294870787840209,
+    "recall": 0.9757701205404875,
+    "threshold": 0.9419679616262557,
+    "tp": 8014,
+    "fp": 4717,
+    "fn": 199,
+    "tn": 2757479
+  },
+  "caveats": [
+    "Test window already evaluated on 2026-10-23; not a pristine new holdout.",
+    "Fixed-model bootstrap CIs do not include fitting/selection or future drift uncertainty.",
+    "24-hour block stationarity is approximate in a short 143-hour test window.",
+    "Post-transaction simulated detection; not pre-payment prevention.",
+    "Whole raw source used but analysis population limited to CASH_OUT/TRANSFER.",
+    "AP is average precision, not trapezoidal PR area; old random-CV prevalence/design differ."
+  ],
+  "resource": {
+    "actual_nice": 15,
+    "threads": 2,
+    "address_space_limit_bytes": 6442450944,
+    "peak_rss_mib": 1918.515625,
+    "minimum_memavailable_gib": 5.9329376220703125,
+    "monitor_samples": 263,
+    "monitor_interval_seconds": 0.2,
+    "elapsed_seconds": 55.296166782965884
+  },
+  "files": {
+    "model.txt": "94a5400d30c6b58f24a940370976b06141c4be26771d7eccc82561004e1f5d7f",
+    "validation_predictions.parquet": "e7f84eaed73b6cb6005283a718de6f2c87a73d8857308f382bb378567c0bd9f1",
+    "test_predictions.parquet": "e2f00bbaae583410f02ea30ae3f9b77323398f7841ba1863a8cbf2f49e09b5dc"
+  }
+}
