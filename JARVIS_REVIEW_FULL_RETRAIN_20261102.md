@@ -22,3 +22,15 @@ Reproducible and correctly evaluated on a forward-time split. Resume-safe wordin
 fraud rate, AUROC 0.996 on held-out later days." Not merged to main; Daniel reviews first.
 
 AUTHORED BY JARVIS II
+
+## Part 2: pre-authorisation model (HELIOS 49e2ac5), re-checked 2026-11-02
+- Features: none from after the transaction (verified list: amount, log_amount, oldbalanceorg, oldbalancedest,
+  amount_to_orig_balance, hour, day, is_night, orig_tx_count, orig_unique_dest, orig_step_gap, dest_recv_count, is_transfer).
+- Recomputed from saved test predictions: AP 0.83661 (test fraud rate 3.67%), AUROC 0.98961, precision 0.83333,
+  recall 0.99062 (1,902 flagged of 43,550). All match HELIOS's JSON.
+- Cost of being honest about timing: AP 0.880 -> 0.837, AUROC 0.996 -> 0.990.
+- Caveat: the validation-chosen threshold is 0.99999998, i.e. scores are squeezed against 1. They rank well but are
+  not calibrated probabilities; say "ranking model" or calibrate (isotonic on validation) before quoting probabilities.
+
+Resume line, both honest: "PaySim fraud detection (6.36M transactions), forward-time split: pre-authorisation model
+AP 0.84 / AUROC 0.99 at a 3.7% fraud rate; 0.88 / 0.996 when post-transaction balances are allowed."
