@@ -20,3 +20,6 @@ models/readmission_group_holdout.joblib
 forward_time_results/model.txt
 forward_time_results/test_predictions.parquet
 full_eval_results/
+
+# HELIOS full-source retrain: prediction/model artifacts stay local (metrics JSON + report are committed).
+results/full_retrain_20261102_artifacts/

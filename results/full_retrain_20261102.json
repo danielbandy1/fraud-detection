@@ -1,0 +1,135 @@
+{
+  "authored_by": "HELIOS",
+  "created_at": "2026-11-02T14:04:48-0500",
+  "source": "ealaxi/paysim1",
+  "license": "CC BY-SA 4.0 (source metadata)",
+  "source_zip_sha256": "f7eef9ffad5cfa64a034143a5c9b30491d189420b273d5ad5723ca40b596613d",
+  "raw_rows": 6362620,
+  "raw_fraud": 8213,
+  "eligible_rows": 2770409,
+  "duplicates_removed": 0,
+  "seed": 42,
+  "split_steps": [
+    500,
+    600
+  ],
+  "splits": {
+    "train": {
+      "rows": 2645779,
+      "fraud": 5561,
+      "base_rate": 0.0021018384377531154,
+      "min_step": 1,
+      "max_step": 500
+    },
+    "valid": {
+      "rows": 81080,
+      "fraud": 1052,
+      "base_rate": 0.012974839664528861,
+      "min_step": 501,
+      "max_step": 600
+    },
+    "test": {
+      "rows": 43550,
+      "fraud": 1600,
+      "base_rate": 0.03673938002296211,
+      "min_step": 601,
+      "max_step": 743
+    }
+  },
+  "rows_train": 2645779,
+  "rows_valid": 81080,
+  "rows_test": 43550,
+  "params": {
+    "objective": "binary",
+    "metric": "average_precision",
+    "learning_rate": 0.05,
+    "num_leaves": 31,
+    "min_child_samples": 50,
+    "feature_fraction": 0.8,
+    "bagging_fraction": 0.8,
+    "bagging_freq": 5,
+    "verbosity": -1,
+    "seed": 42,
+    "num_threads": 2,
+    "deterministic": true,
+    "force_col_wise": true,
+    "scale_pos_weight": 474.7739615177126
+  },
+  "best_iteration": 17,
+  "threshold_basis": "cost-based src.models.optimal_threshold fit on validation labels only: cost_fn=1.0, cost_fp=0.1 (COST_THRESHOLD_FIX_ORION.md; repo evaluate() costs); equal-cost ties choose the lowest threshold; no-alert operating point included",
+  "threshold": 0.9956841351396446,
+  "ap": 0.8802666171551097,
+  "auroc": 0.9955702175208583,
+  "precision": 0.8781163434903048,
+  "recall": 0.990625,
+  "test_at_cost_threshold": {
+    "threshold": 0.9956841351396446,
+    "tn": 41730,
+    "fp": 220,
+    "fn": 15,
+    "tp": 1585,
+    "precision": 0.8781163434903048,
+    "recall": 0.990625,
+    "f1": 0.9309838472834068,
+    "rows": 43550,
+    "fraud": 1600
+  },
+  "test_at_fixed_0_5": {
+    "threshold": 0.5,
+    "tn": 41673,
+    "fp": 277,
+    "fn": 15,
+    "tp": 1585,
+    "precision": 0.8512352309344791,
+    "recall": 0.990625,
+    "f1": 0.9156556903523975,
+    "rows": 43550,
+    "fraud": 1600
+  },
+  "feature_cols": [
+    "amount",
+    "log_amount",
+    "oldbalanceorg",
+    "newbalanceorig",
+    "oldbalancedest",
+    "newbalancedest",
+    "orig_balance_delta",
+    "dest_balance_delta",
+    "orig_drained",
+    "dest_no_change",
+    "amount_to_orig_balance",
+    "hour",
+    "day",
+    "is_night",
+    "orig_tx_count",
+    "orig_unique_dest",
+    "orig_step_gap",
+    "dest_recv_count",
+    "is_transfer"
+  ],
+  "features_sha256": "56c7ea0a11d54c33cf0eff34a3acf0c2e6c2b6f9547fbb84d23f019f99617863",
+  "cost_threshold_sha256": "72c8f61d6509d86e6d123aceeef06fec34691e9ee2bb76f02b06f609a7127608",
+  "script_sha256": "1de1aff30abbc15a5e65cc831267574301283470ae871cb8011b2d2842f667d1",
+  "caveats": [
+    "Test window (steps > 600) was already scored on 2026-10-23/24; scores are bound by the same data, not a pristine future holdout.",
+    "Post-transaction detection: balance-after-transfer features cannot support pre-payment prevention claims.",
+    "Population limited to CASH_OUT/TRANSFER rows (fraud types in PaySim).",
+    "AP is sklearn average_precision_score; legacy 0.880/0.989 came from random CV with leaky full-window histories and thresholds tuned on evaluated labels, so it is not comparable evidence.",
+    "Cost costs mirror the repo defaults, not an estimated business loss model."
+  ],
+  "resource": {
+    "actual_nice": 19,
+    "threads": 2,
+    "address_space_limit_bytes": 8192000000,
+    "peak_rss_mib": 1928.734375,
+    "minimum_system_available_gib": 6.03863525390625,
+    "monitor_samples": 284,
+    "float32_features": true
+  },
+  "runtime_s": 77.07375188684091,
+  "files": {
+    "model.txt": "30fab6dd8de08c93514e815fc2f185ce35a5c47a9d658fc2fa0c391f49b0b592",
+    "test_predictions.parquet": "436875a26a2c1db323e2ccc8c138d14332238bf0742feaadccaf5e557640e25a",
+    "validation_predictions.parquet": "f129374fe6f4772dc7deb45a457d39f4c389a0bc152776087dd5f201d68c1f09"
+  }
+}
