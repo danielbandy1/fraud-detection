@@ -23,3 +23,4 @@ full_eval_results/
 
 # HELIOS full-source retrain: prediction/model artifacts stay local (metrics JSON + report are committed).
 results/full_retrain_20261102_artifacts/
+results/preauth_20261102_artifacts/

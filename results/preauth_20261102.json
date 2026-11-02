@@ -1,0 +1,144 @@
+{
+  "authored_by": "HELIOS",
+  "created_at": "2026-11-02T17:33:58-0500",
+  "source": "ealaxi/paysim1",
+  "license": "CC BY-SA 4.0 (source metadata)",
+  "source_zip_sha256": "f7eef9ffad5cfa64a034143a5c9b30491d189420b273d5ad5723ca40b596613d",
+  "raw_rows": 6362620,
+  "raw_fraud": 8213,
+  "eligible_rows": 2770409,
+  "seed": 42,
+  "split_steps": [
+    500,
+    600
+  ],
+  "splits": {
+    "train": {
+      "rows": 2645779,
+      "fraud": 5561,
+      "base_rate": 0.0021018384377531154,
+      "min_step": 1,
+      "max_step": 500
+    },
+    "valid": {
+      "rows": 81080,
+      "fraud": 1052,
+      "base_rate": 0.012974839664528861,
+      "min_step": 501,
+      "max_step": 600
+    },
+    "test": {
+      "rows": 43550,
+      "fraud": 1600,
+      "base_rate": 0.03673938002296211,
+      "min_step": 601,
+      "max_step": 743
+    }
+  },
+  "rows_train": 2645779,
+  "rows_valid": 81080,
+  "rows_test": 43550,
+  "features": [
+    "amount",
+    "log_amount",
+    "oldbalanceorg",
+    "oldbalancedest",
+    "amount_to_orig_balance",
+    "hour",
+    "day",
+    "is_night",
+    "orig_tx_count",
+    "orig_unique_dest",
+    "orig_step_gap",
+    "dest_recv_count",
+    "is_transfer"
+  ],
+  "excluded_post_transaction": [
+    "newbalanceorig",
+    "newbalancedest",
+    "orig_balance_delta",
+    "dest_balance_delta",
+    "orig_drained",
+    "dest_no_change"
+  ],
+  "params": {
+    "objective": "binary",
+    "metric": "average_precision",
+    "learning_rate": 0.05,
+    "num_leaves": 31,
+    "min_child_samples": 50,
+    "feature_fraction": 0.8,
+    "bagging_fraction": 0.8,
+    "bagging_freq": 5,
+    "verbosity": -1,
+    "seed": 42,
+    "num_threads": 2,
+    "deterministic": true,
+    "force_col_wise": true,
+    "scale_pos_weight": 474.7739615177126
+  },
+  "best_iteration": 6,
+  "threshold_basis": "cost-based src.models.optimal_threshold fit on validation labels only: cost_fn=1.0, cost_fp=0.1 (repo evaluate() costs); no-alert operating point included; equal-cost ties choose the lowest threshold; frozen before any test prediction",
+  "threshold": 0.9999999831644296,
+  "ap": 0.8366078463224313,
+  "auroc": 0.9896117103694875,
+  "precision": 0.8333333333333334,
+  "recall": 0.990625,
+  "test_base_rate": 0.03673938002296211,
+  "test_at_cost_threshold": {
+    "threshold": 0.9999999831644296,
+    "tn": 41633,
+    "fp": 317,
+    "fn": 15,
+    "tp": 1585,
+    "precision": 0.8333333333333334,
+    "recall": 0.990625,
+    "f1": 0.905197030268418,
+    "rows": 43550,
+    "fraud": 1600
+  },
+  "test_at_fixed_0_5": {
+    "threshold": 0.5,
+    "tn": 41588,
+    "fp": 362,
+    "fn": 11,
+    "tp": 1589,
+    "precision": 0.814454126089185,
+    "recall": 0.993125,
+    "f1": 0.894959166431991,
+    "rows": 43550,
+    "fraud": 1600
+  },
+  "post_transaction_model": {
+    "artifact": "results/full_retrain_20261102.json",
+    "ap": 0.8802666171551097,
+    "auroc": 0.9955702175208583,
+    "precision": 0.8781163434903048,
+    "recall": 0.990625,
+    "threshold": 0.9956841351396446
+  },
+  "features_sha256": "56c7ea0a11d54c33cf0eff34a3acf0c2e6c2b6f9547fbb84d23f019f99617863",
+  "cost_threshold_sha256": "72c8f61d6509d86e6d123aceeef06fec34691e9ee2bb76f02b06f609a7127608",
+  "script_sha256": "dce7f9b996c4d237f3645fd54d378035069600d0391c7dc735110c10c8eb2062",
+  "caveats": [
+    "Test window (steps > 600) was already scored on 2026-10-23/24; scores are bound by the same data.",
+    "Pre-authorisation means no post-transaction balance field; PaySim's newbalance* columns and anything derived from them are excluded.",
+    "Population limited to CASH_OUT/TRANSFER rows (fraud types in PaySim).",
+    "AP is sklearn average_precision_score; report AP with the test base rate (3.7%) next to it, as JARVIS's review directs.",
+    "Cost costs mirror the repo defaults, not an estimated business loss model."
+  ],
+  "resource": {
+    "actual_nice": 19,
+    "threads": 2,
+    "address_space_limit_bytes": 8192000000,
+    "peak_rss_mib": 1967.1875,
+    "minimum_system_available_gib": 5.3474578857421875,
+    "monitor_samples": 274,
+    "float32_features": true
+  },
+  "runtime_s": 75.04636243917048,
+  "files": {
+    "model.txt": "367db482a20dfed42d05696702c0f08caac85fcd589b6d1e2e35dc20cb5e29a5",
+    "test_predictions.parquet": "b6ee993ee72ee30fd8a6178a1eeab4f876d68990450254741d6dcde8b6ace9c7"
+  }
+}
