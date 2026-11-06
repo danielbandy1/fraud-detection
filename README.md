@@ -36,6 +36,10 @@ A later, prespecified forward-time train/validation/test run must use training-w
 
 Old README preserved in `docs/README_UPSTREAM_20261023.md`. Python/ML/API/Streamlit code is inspectable, but no claim of a live production service or Daniel's independent authorship of these repairs is made.
 
+## Verified evaluated-results view (local)
+
+` .venv/bin/streamlit run evaluated_app_ORION.py ` opens the separate forward-time artifact view. It checks model/features/report/prediction consistency, reconstructs AP/AUROC/confusion counts, displays frozen test results and curves, and confines interactive cost selection to validation predictions. It uses saved small artifacts, without raw-data feature rebuilding or retraining. The historical app.py is preserved and is not this view. See EVALUATED_VIEW_ORION.md for scope and verification. AUTHORED BY ORION, 2026-10-28.
+
 ## Full-source retrain (HELIOS branch, 2026-11-02)
 
 A real retrain on the full cached public source with leak-free prior-step histories and a time-ordered train/validation/test split (steps <=500 / 501-600 / >600, train-only class weighting), LightGBM plan parameters fixed in advance, and a cost-based threshold (FN=1/FP=0.1) fit on validation labels only. Held-out **test block** (43,550 rows, 1,600 fraud): AP **0.8802666172**, AUROC **0.9955702175**, precision **0.8781163435** and recall **0.990625** at threshold 0.995684 (TP 1585 / FP 220 / FN 15 / TN 41730). Full record and reproduction: [results/full_retrain_20261102.json](results/full_retrain_20261102.json), [RESULTS_FULL_RETRAIN.md](RESULTS_FULL_RETRAIN.md). The historical random-CV 0.880/0.989 artifact remains **unsupported as evidence**; the similar AP here is a coincidence of a different design and does not corroborate it.

@@ -8,10 +8,10 @@ Run:
 Design note: graph features (orig_tx_count, orig_step_gap, dest_recv_count,
 orig_unique_dest) require historical context. Single-transaction /score calls
 use conservative "first-time sender" defaults; /score/window accepts a list of
-recent transactions for the account so graph features compute correctly.
+supplied transactions as partial historical context. Only strictly earlier steps
+contribute; this does not establish complete account/destination history.
 """
 from __future__ import annotations
-import json
 import pathlib
 import sys
 from contextlib import asynccontextmanager
@@ -24,23 +24,22 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 from src.features import build_features, FEATURE_COLS
-from src.predict import _as_dataframe
+from src.predict import _as_dataframe, load_evaluated_fraud_model
 
-MODEL_PATH   = pathlib.Path(__file__).parent.parent / "models" / "lgbm_fraud.txt"
-RESULTS_PATH = pathlib.Path(__file__).parent.parent / "models" / "results.json"
+MODEL_PATH   = pathlib.Path(__file__).parent.parent / "full_eval_results" / "model.txt"
+RESULTS_PATH = pathlib.Path(__file__).parent.parent / "FULL_EVAL_ORION_20261024.json"
 
 _model: lgb.Booster | None = None
 _explainer = None
-_threshold: float = 0.942  # fallback; overridden from results.json at startup
+_threshold: float = 0.942  # inactive until verified artifact is loaded
+_provenance: dict = {}
 
 
 def _load():
-    global _model, _explainer, _threshold
+    global _model, _explainer, _threshold, _provenance
     if _model is None:
-        _model = lgb.Booster(model_file=str(MODEL_PATH))
-        if RESULTS_PATH.exists():
-            with open(RESULTS_PATH) as f:
-                _threshold = json.load(f).get("lgbm", {}).get("threshold", _threshold)
+        model, threshold, provenance = load_evaluated_fraud_model()
+        _model, _threshold, _provenance = model, threshold, provenance
         try:
             import shap
             _explainer = shap.TreeExplainer(_model)
@@ -58,8 +57,8 @@ app = FastAPI(
     title="PaySim Fraud Detection",
     description=(
         "Scores mobile money transactions for fraud risk using LightGBM + graph features. "
-        "Use /score/window for accurate scoring — it requires recent account history "
-        "so graph features (velocity, fan-out, step gap) compute correctly."
+        "Use /score/window to supply partial history. Only strictly earlier steps "
+        "contribute. Supplied history does not establish complete historical coverage or validated accuracy."
     ),
     version="1.0.0",
     lifespan=lifespan,
@@ -83,7 +82,7 @@ class FraudScore(BaseModel):
     risk_tier: str
     is_flagged: bool
     top_risk_factors: list[dict]
-    graph_features_available: bool = False
+    graph_features_available: bool = Field(default=False, description="At least one supplied strictly earlier transaction contributes originator or destination history; not a completeness or accuracy guarantee.")
     model_threshold: float
 
 
@@ -108,10 +107,13 @@ def _score_df(rows: list[dict], target_idx: int = -1) -> FraudScore:
         raise HTTPException(status_code=422, detail=f"Feature error: {e}")
 
     X = X_all.iloc[[target_idx]]
-    prob = float(_model.predict(X)[0])
+    prob = float(_model.predict(X, num_threads=2)[0])
     flagged = prob >= _threshold
     tier = "HIGH" if prob >= 0.80 else ("MEDIUM" if prob >= _threshold else "LOW")
-    has_graph = len(rows) > 1
+    # Reflect the same prior-step context actually used by feature construction.
+    # AUTHORED BY ORION. Multiple unrelated/future/tied rows are not history.
+    target_features = df_feat.iloc[target_idx]
+    has_graph = bool(target_features["orig_tx_count"] > 0 or target_features["dest_recv_count"] > 0)
 
     factors = []
     if _explainer is not None:
@@ -145,7 +147,8 @@ def health():
         "status": "ok",
         "model_loaded": _model is not None,
         "model_path": str(MODEL_PATH),
-        "fraud_threshold": _threshold,
+        "fraud_threshold": _threshold if _model is not None else None,
+        "provenance": _provenance if _model is not None else None,
     }
 
 
@@ -153,7 +156,7 @@ def health():
 def score(tx: Transaction):
     """
     Score a single transaction. Graph features default to 'first-time sender' values.
-    For accurate scoring, use /score/window with recent account history.
+    /score/window can supply partial earlier-step history; accuracy is not guaranteed.
     """
     return _score_df([tx.model_dump()])
 
@@ -162,7 +165,8 @@ def score(tx: Transaction):
 def score_window(transactions: list[Transaction]):
     """
     Score the LAST transaction in the list using all transactions for graph context.
-    Pass recent history for the same originator account first, target transaction last.
+    Put the target last; earlier-step originator and destination transactions may
+    supply partial context. Same-step/future rows cannot contribute history.
     Minimum 1 transaction; maximum 500.
     """
     if not transactions:

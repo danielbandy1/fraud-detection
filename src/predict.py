@@ -35,7 +35,10 @@ def _as_dataframe(transactions) -> pd.DataFrame:
     return df
 
 
-def load_fraud_model(model_path: str | Path = "models/lgbm_fraud.txt") -> lgb.Booster:
+def load_fraud_model(model_path: str | Path | None = None) -> lgb.Booster:
+    """Default to the verified evaluated model; explicit paths are caller-managed."""
+    if model_path is None:
+        return load_evaluated_fraud_model()[0]
     path = Path(model_path)
     if not path.exists():
         raise FileNotFoundError(f"Fraud model not found: {path}")
@@ -51,3 +54,35 @@ def predict(transactions, model=None) -> np.ndarray:
     model = model or load_fraud_model()
     probs = model.predict(X)
     return np.asarray(probs, dtype=float)
+
+
+def load_evaluated_fraud_model(root: str | Path | None = None):
+    """Load the hash-bound forward-time artifact and validation threshold.
+
+    AUTHORED BY ORION. Returns (model, threshold, provenance); no historical fallback.
+    """
+    import hashlib, json
+    root = Path(root) if root is not None else Path(__file__).resolve().parents[1]
+    report_path = root / 'FULL_EVAL_ORION_20261024.json'
+    report_bytes = report_path.read_bytes()
+    report = json.loads(report_bytes)
+    model_path = root / 'full_eval_results/model.txt'
+    model_bytes = model_path.read_bytes()
+    if hashlib.sha256(model_bytes).hexdigest() != report['files']['model.txt']:
+        raise ValueError('Evaluated model hash mismatch')
+    if hashlib.sha256((root/'src/features.py').read_bytes()).hexdigest() != report['features_sha256']:
+        raise ValueError('Evaluated feature implementation hash mismatch')
+    if report['features'] != FEATURE_COLS:
+        raise ValueError('Evaluated feature order mismatch')
+    selection = report['threshold_selection']
+    threshold = float(selection['threshold'])
+    if selection['test_used_for_selection'] is not False or not np.isfinite(threshold) or not 0 <= threshold <= 1:
+        raise ValueError('Invalid validation threshold provenance')
+    # Parse exactly the verified bytes rather than reopening a potentially changed file.
+    model = lgb.Booster(model_str=model_bytes.decode('utf-8'))
+    if model.feature_name() != FEATURE_COLS:
+        raise ValueError('Model feature names mismatch')
+    provenance = dict(model_sha256=report['files']['model.txt'],
+                      evaluation_report_sha256=hashlib.sha256(report_bytes).hexdigest(),
+                      scope='Forward-time public PaySim post-transaction benchmark; partial supplied history; not validated deployment performance')
+    return model, threshold, provenance

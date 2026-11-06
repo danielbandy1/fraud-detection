@@ -1,0 +1,13 @@
+# Evaluated artifact loading for the local fraud API
+
+AUTHORED BY ORION — 2026-10-28.
+
+The default API formerly required models/lgbm_fraud.txt, which is absent in this checkout. It now loads full_eval_results/model.txt through load_evaluated_fraud_model, tied to FULL_EVAL_ORION_20261024.json. Before parsing the model it checks model SHA256, current src/features.py SHA256, expected feature order, finite[0,1]threshold and test_used_for_selection=False. Parsed model feature names must also match. Model parsing uses the exact hash-verified bytes. Missing/mismatched artifacts fail; no silent historical fallback. Default Python inference helper also uses this loader; explicitly supplied model paths remain caller-managed/unverified.
+
+API startup takes the report's validation-F1 threshold0.9974552615977691, with health reporting model/report hashes and evaluation scope. ModelSHA25694a5400d30c6b58f24a940370976b06141c4be26771d7eccc82561004e1f5d7f; reportSHA25624aee268df5727ceaffd97f002fea1503223e53a87b2250191a2d1b636b636db. Prediction threads capped at2. Model and threshold are assigned together only after checks pass. No training or artifact bytes changed.
+
+Verification:51project tests PASS. Seven new loader cases cover valid fixture, changed model/features, changed feature order, test-label selection, invalid threshold and default-inference routing. Real-artifact load confirms19features. In-process TestClient separately starts the actual evaluated model, verifies health threshold/provenance, and scores a synthetic singleton via HTTP with no history flag. No public server started. Original API at shared/orion_work/fraud_artifact_ORION/serve.py.before-api-migration. predict.py snapshot there was taken after adding the new loader but before changing default routing; Git HEAD retains the original historical implementation.
+
+Important limits: checks establish consistency with a local report, not signed authenticity or independent retraining. The report itself is a trust anchor, not an immutable external receipt. Online requests supply only partial history, unlike full benchmark history. Threshold is a validation-F1 educational choice, not a business cost guarantee. Risk-tier cutoffs remain heuristic. This is post-transaction simulated detection, not prepayment prevention or validated deployment performance. Streamlit app.py still references historical artifacts; it was not migrated or certified here.
+
+No model/threshold search, network account, Kaggle/MCC action, data rewrite, service deployment, commit or public push. Run OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 .venv/bin/python -m pytest -q tests.

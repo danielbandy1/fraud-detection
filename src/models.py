@@ -30,25 +30,30 @@ class EvalMetrics:
 
 def optimal_threshold(y_true: np.ndarray, y_prob: np.ndarray,
                       cost_fn: float = 1.0, cost_fp: float = 0.1) -> float:
-    """
-    Find threshold minimising expected cost: cost_fn * FN + cost_fp * FP.
-    Default: missing a fraud (FN) costs 10x more than a false alarm (FP).
-    """
-    prec, rec, thresholds = precision_recall_curve(y_true, y_prob)
-    n_pos = y_true.sum()
-    n_neg = len(y_true) - n_pos
+    """Minimise cost_fn*FN + cost_fp*FP on VALIDATION labels only.
 
-    best_cost = np.inf
-    best_t = 0.5
-    for t, p, r in zip(thresholds, prec[:-1], rec[:-1]):
-        tp = r * n_pos
-        fn = n_pos - tp
-        fp = tp / (p + 1e-9) - tp
-        cost = cost_fn * fn + cost_fp * fp
-        if cost < best_cost:
-            best_cost = cost
-            best_t = t
-    return best_t
+    Includes the no-alert operating point (> maximum score). In equal-cost
+    ties choose the lowest threshold. AUTHORED BY ORION.
+    """
+    y_true, y_prob = np.asarray(y_true), np.asarray(y_prob, dtype=float)
+    if not (y_true.ndim == y_prob.ndim == 1 and len(y_true) == len(y_prob) and len(y_true)):
+        raise ValueError("Aligned nonempty outcome/probability vectors required")
+    if not np.isin(y_true, [0, 1]).all():
+        raise ValueError("Binary outcomes required")
+    if not np.isfinite(y_prob).all() or ((y_prob < 0) | (y_prob > 1)).any():
+        raise ValueError("Probabilities must be finite and within [0,1]")
+    if not np.isfinite([cost_fn, cost_fp]).all() or min(cost_fn, cost_fp) < 0:
+        raise ValueError("Costs must be finite and nonnegative")
+    order = np.argsort(y_prob, kind="stable")
+    scores, labels = y_prob[order], y_true[order]
+    thresholds, starts = np.unique(scores, return_index=True)
+    positives = np.cumsum(labels[::-1])[::-1][starts]
+    negatives = len(labels) - starts - positives
+    fn = labels.sum() - positives
+    costs = cost_fn * fn + cost_fp * negatives
+    thresholds = np.r_[thresholds, np.nextafter(scores[-1], np.inf)]
+    costs = np.r_[costs, cost_fn * labels.sum()]
+    return float(thresholds[np.argmin(costs)])
 
 
 def evaluate(y_true: np.ndarray, y_prob: np.ndarray, threshold: float | None = None) -> EvalMetrics:
